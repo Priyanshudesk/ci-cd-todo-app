@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app
+  labels:
+    app: todo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo
+  template:
+    metadata:
+      labels:
+        app: todo
+    spec:
+      containers:
+      - name: todo-container
+        image: priyanshu1008/ci-cd-todo:latest   # 👈 use your Docker Hub image
+        ports:
+        - containerPort: 5000
+
+
