@@ -1,0 +1,45 @@
+name: Self-hosted CI/CD Deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, Windows, X64]
+    env:
+      IMAGE: priyanshu1008/ci-cd-todo:${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner info
+        run: |
+          echo "Runner: ${{ runner.name }}"
+          echo "Labels: ${{ toJSON(runner.labels) }}"
+
+      - name: Ensure Docker is available
+        run: docker version
+
+      - name: Log in to Docker Hub
+        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE }} .
+
+      - name: Push Docker image
+        run: docker push ${{ env.IMAGE }}
+
+      - name: Verify kubectl & cluster access
+        run: |
+          kubectl version
+          kubectl get nodes --no-headers
+
+      - name: Apply manifests and update image
+        run: |
+          kubectl apply -f k8s/
+          kubectl set image deployment/todo-app todo-container=${{ env.IMAGE }} --record || true
+          kubectl rollout status deployment/todo-app --timeout=120s
+          kubectl get pods -A
