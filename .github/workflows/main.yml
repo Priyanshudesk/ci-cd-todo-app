@@ -7,15 +7,11 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
-
-    defaults:
-      run:
-        shell: cmd
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -26,12 +22,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v2
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-todo:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/todo-app:latest
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
@@ -41,5 +37,5 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           kubectl apply -f k8s/
-          kubectl set image deployment/todo-deployment todo-container=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/ci-cd-todo:${{ github.sha }} --record || exit 0
-          kubectl rollout status deployment/todo-deployment --timeout=120s
+
+
